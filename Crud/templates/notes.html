@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notes</title>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <h1>Notes</h1>
+
+    <!-- Form to submit a new note -->
+    <form id="noteForm">
+        <label for="title">Title:</label>
+        <input type="text" id="title" name="title" required>
+        <br>
+        <label for="content">Content:</label>
+        <textarea id="content" name="content" required></textarea>
+        <br>
+        <button type="button" onclick="addNote()">Add Note</button>
+    </form>
+
+    <!-- Show existing notes button -->
+    <button type="button" onclick="showNotes()">Show Existing Notes</button>
+
+    <!-- Existing Notes -->
+    <div id="notesListContainer" style="display: none;">
+        <h2>Existing Notes</h2>
+        <ul id="notesList">
+            {% for note in notes %}
+                <li>{{ note.title }} - {{ note.content }} (Created by: {{ note.username }})</li>
+            {% endfor %}
+        </ul>
+    </div>
+
+    <!-- Placeholder for Edit and Delete buttons -->
+    <button onclick="editNote()">Edit Note</button>
+    <button onclick="deleteNote()">Delete Note</button>
+
+    <button onclick="goBack()">Back</button>
+
+    <!-- JavaScript to handle form submission and edit/delete operations -->
+    <script>
+        function fetchNoteById(noteId) {
+            return fetch(`/notes/${noteId}`, {
+                method: 'GET',
+                headers: {
+                    'Accept': 'application/json'
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`Request failed with status ${response.status}`);
+                }
+                return response.json();
+            })
+            .catch(error => {
+                console.error('Error fetching note by ID:', error);
+            });
+        }
+
+        function addNote() {
+            var title = document.getElementById('title').value;
+            var content = document.getElementById('content').value;
+    
+            fetch('/notes', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    title: title,
+                    content: content,
+                }),
+            })
+            .then(response => response.text())
+            .then(data => {
+                alert(data);
+                location.reload();
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+        }
+    
+        function showNotes() {
+            var notesListContainer = document.getElementById('notesListContainer');
+            
+            // Fetch existing notes
+            fetch('/notes?format=json', {
+                method: 'GET',
+                headers: {
+                    'Accept': 'application/json'
+                },
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`Request failed with status ${response.status}`);
+                }
+        
+                // Check if the response is JSON
+                var contentType = response.headers.get('content-type');
+                if (contentType && contentType.includes('application/json')) {
+                    return response.json();  // Parse response as JSON
+                } else {
+                    throw new Error('Invalid content type');
+                }
+            })
+            .then(notes => {
+                // Update the notes list with the fetched data
+                var notesList = document.getElementById('notesList');
+                notesList.innerHTML = '';
+                notes.forEach(note => {
+                    var listItem = document.createElement('li');
+                    listItem.textContent = `${note.title} - ${note.content} (Created by: ${note.username})`;
+                    notesList.appendChild(listItem);
+                });
+                notesListContainer.style.display = 'block';
+            })
+            .catch(error => {
+                console.error('Error fetching notes:', error);
+            });
+        }
+    
+        function editNote(noteId) {
+            // Placeholder text, update as needed
+            alert(`Edit Note with ID ${noteId}`);
+        }
+    
+        function deleteNote(noteId) {
+            fetch(`/notes/${noteId}`, {
+                method: 'DELETE',
+            })
+            .then(response => response.text())
+            .then(data => {
+                alert(data);
+                showNotes(); // Display the updated notes dynamically
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+        }
+    
+        function goBack() {
+            window.location.href = '/';
+        }
+    
+        // Show the notes list when there are notes available
+        var notesListContainer = document.getElementById('notesListContainer');
+        if ({{ notes|length }} > 0) {
+            showNotes();
+        } else {
+            notesListContainer.style.display = 'none';
+        }
+    </script>
+</body>
+</html>
