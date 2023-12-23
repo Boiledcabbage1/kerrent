@@ -19,7 +19,7 @@
         <label for="content">Content:</label>
         <textarea id="content" name="content" required></textarea>
         <br>
-        <button type="button" onclick="addNote()">Add Note</button>
+        <button type="button" id="addNoteBtn">Add Note</button> 
     </form>
 
     <!-- Show existing notes button -->
@@ -64,7 +64,7 @@
         function addNote() {
             var title = document.getElementById('title').value;
             var content = document.getElementById('content').value;
-    
+        
             fetch('/notes', {
                 method: 'POST',
                 headers: {
@@ -73,6 +73,7 @@
                 body: JSON.stringify({
                     title: title,
                     content: content,
+                    user_id: {{ user_id|default('null') }},  // Assuming user_id is passed as a template variable
                 }),
             })
             .then(response => response.text())
@@ -85,10 +86,14 @@
             });
         }
     
+        // Call addNote when the "Add Note" button is clicked
+        document.getElementById('addNoteBtn').addEventListener('click', function() {
+            addNote();
+        });
+    
         function showNotes() {
             var notesListContainer = document.getElementById('notesListContainer');
-            
-            // Fetch existing notes
+        
             fetch('/notes?format=json', {
                 method: 'GET',
                 headers: {
@@ -109,6 +114,8 @@
                 }
             })
             .then(notes => {
+                console.log('Added notes:', notes);  // Log the added notes to the console
+        
                 // Update the notes list with the fetched data
                 var notesList = document.getElementById('notesList');
                 notesList.innerHTML = '';
@@ -123,7 +130,7 @@
                 console.error('Error fetching notes:', error);
             });
         }
-    
+        
         function editNote(noteId) {
             // Placeholder text, update as needed
             alert(`Edit Note with ID ${noteId}`);
